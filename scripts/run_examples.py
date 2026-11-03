@@ -19,7 +19,7 @@ os.environ.setdefault("EMPORIO_NOW", "2026-11-03T14:30:00")  # Tuesday afternoon
 import anthropic  # noqa: E402
 
 from emporio_agent.agent import StoreAgent  # noqa: E402
-from emporio_agent.cli import Transcript  # noqa: E402
+from emporio_agent.cli import Transcript, ensure_utf8_output  # noqa: E402
 from emporio_agent.config import load_settings  # noqa: E402
 from emporio_agent.data_store import DataStore  # noqa: E402
 
@@ -74,6 +74,7 @@ SCENARIOS = [
 
 
 def run(selected: set[int] | None = None) -> None:
+    ensure_utf8_output()
     settings = load_settings()
     store = DataStore(settings.data_dir)
     client = anthropic.Anthropic()

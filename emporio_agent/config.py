@@ -40,7 +40,10 @@ def load_settings() -> Settings:
     fixed_now = None
     raw_now = os.getenv("EMPORIO_NOW", "").strip()
     if raw_now:
-        fixed_now = datetime.fromisoformat(raw_now)
+        try:
+            fixed_now = datetime.fromisoformat(raw_now)
+        except ValueError:
+            raise ValueError(f"EMPORIO_NOW must be an ISO 8601 datetime such as 2026-11-03T14:30:00, got {raw_now!r}") from None
         if fixed_now.tzinfo is None:
             fixed_now = fixed_now.replace(tzinfo=STORE_TIMEZONE)
 

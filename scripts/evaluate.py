@@ -24,6 +24,7 @@ os.environ.setdefault("EMPORIO_NOW", "2026-11-03T14:30:00")
 import anthropic  # noqa: E402
 
 from emporio_agent.agent import StoreAgent  # noqa: E402
+from emporio_agent.cli import ensure_utf8_output  # noqa: E402
 from emporio_agent.config import load_settings  # noqa: E402
 from emporio_agent.data_store import DataStore, normalize  # noqa: E402
 
@@ -69,6 +70,7 @@ CASES = [
 
 
 def run() -> int:
+    ensure_utf8_output()
     settings = load_settings()
     store = DataStore(settings.data_dir)
     client = anthropic.Anthropic()

@@ -12,6 +12,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -23,6 +24,13 @@ from rich.panel import Panel
 from .agent import AgentReply, StoreAgent
 from .config import load_settings
 from .data_store import DataStore
+
+def ensure_utf8_output() -> None:
+    """Avoid UnicodeEncodeError on consoles/pipes that default to a legacy code page (e.g. cp1252 on Windows)."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure") and (stream.encoding or "").lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
 
 console = Console()
 
@@ -57,10 +65,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Empório da Música — assistente de atendimento")
     parser.add_argument("--show-tools", action="store_true", help="mostra as chamadas de ferramentas")
     args = parser.parse_args(argv)
+    ensure_utf8_output()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
-    settings = load_settings()
-    store = DataStore(settings.data_dir)
+    try:
+        settings = load_settings()
+        store = DataStore(settings.data_dir)
+    except (ValueError, OSError) as exc:
+        console.print(f"[red]Configuração inválida:[/red] {exc}")
+        console.print("Confira o arquivo .env (veja .env.example) e a pasta de dados.")
+        return 1
     if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
         console.print("[red]ANTHROPIC_API_KEY não configurada.[/red] Copie .env.example para .env e preencha a chave.")
         return 1
