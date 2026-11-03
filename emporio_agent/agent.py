@@ -109,6 +109,8 @@ class StoreAgent:
             "tools": self.tools,
             "messages": self.messages,
             "output_config": {"effort": self.settings.effort},
+            # Second breakpoint on the latest message: caches the growing conversation history too.
+            "cache_control": {"type": "ephemeral"},
         }
         if self.settings.model in FALLBACK_MODELS:
             kwargs["betas"] = [FALLBACK_BETA]

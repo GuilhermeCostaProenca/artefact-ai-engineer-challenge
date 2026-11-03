@@ -96,6 +96,7 @@ def test_request_uses_cache_effort_and_refusal_fallback(make_agent):
     agent.reply("oi")
     call = client.calls[0]
     assert call["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert call["cache_control"] == {"type": "ephemeral"}  # history breakpoint
     assert "03/11/2026 14:00" in call["system"][0]["text"]
     assert call["output_config"] == {"effort": "medium"}
     assert call["betas"] == [FALLBACK_BETA] and call["fallbacks"] == "default"
