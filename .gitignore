@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Secrets
+.env
+
+# Local runtime output (escalations, saved sessions)
+runtime/
+
+# Original challenge archive extraction (the data/ folder holds the working copy)
+_original/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

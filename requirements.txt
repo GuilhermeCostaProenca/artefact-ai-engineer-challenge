@@ -1,0 +1,5 @@
+anthropic==2.4.0
+python-dotenv==1.2.4
+rich==15.0.0
+tzdata==2026.6
+pytest==9.2.0
