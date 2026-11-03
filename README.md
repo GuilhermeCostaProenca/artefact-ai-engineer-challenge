@@ -13,11 +13,11 @@ Dó:      Infelizmente não 😕 Ele teve mesmo uma "Oferta Especial" de 12%, ma
 
 | | |
 |---|---|
-| **Language** | Python 3.10+ |
+| **Language** | Python 3.12 (tested); 3.10+ expected |
 | **LLM** | Claude Opus 5.5 (`claude-opus-5-5`) via the official Anthropic SDK |
 | **Approach** | Function calling (tool use) + deterministic data tools + section-based policy retrieval |
 | **Interface** | Terminal chat (CLI) |
-| **Quality** | 60 unit tests (no network) + 13-case behavioral evaluation against the real model (13/13) |
+| **Quality** | 64 unit tests (no network) + 13-case behavioral evaluation against the real model (13/13) |
 
 ---
 
@@ -38,7 +38,7 @@ Dó:      Infelizmente não 😕 Ele teve mesmo uma "Oferta Especial" de 12%, ma
 
 ## Quick start
 
-**Requirements:** Python 3.10+ and an Anthropic API key ([console.anthropic.com](https://console.anthropic.com)).
+**Requirements:** Python 3.12 (the version it was tested on; 3.10+ should work) and an Anthropic API key ([console.anthropic.com](https://console.anthropic.com)).
 
 ```bash
 git clone https://github.com/GuilhermeCostaProenca/artefact-ai-engineer-challenge.git
@@ -74,7 +74,7 @@ Chat commands: `/nova` (new conversation), `/salvar [file.md]` (save transcript 
 ### Other commands
 
 ```bash
-python -m pytest                      # 60 unit tests, offline, ~2 s
+python -m pytest                      # 64 unit tests, offline, ~3 s
 python scripts/evaluate.py            # behavioral eval against Claude -> evals/report.md
 python scripts/run_examples.py        # regenerate examples/*.md against Claude
 ```
@@ -132,7 +132,7 @@ The case asks the agent to *"know when to consult data and when to consult polic
 
 - Strong, reliable tool use and instruction following in Portuguese, which matters more here than raw speed.
 - **Effort `medium`** (configurable). Adaptive thinking is always on in this model, and effort trades reasoning depth against latency and cost. In the evaluation, single-tool turns took about 2–9 s.
-- **Prompt caching:** tools + system prompt form a stable prefix, frozen once per session (the timestamp is captured at session start), so later turns read it from cache.
+- **Prompt caching:** two breakpoints. One sits on the tools + system prompt prefix (~4k tokens, frozen per session because the timestamp is captured at session start). The other sits on the latest message, so the growing history is cached too. Measured on a 5-turn conversation: every request read the prefix from cache, and the uncached input dropped from up to 2,286 tokens per request (prefix-only caching) to 2–4 tokens.
 - **Server-side refusal fallback** (`fallbacks: "default"`): if a safety classifier declines a request, the API retries it on a fallback model. If the whole chain refuses, the customer gets a polite redirection, not a crash.
 - The model is one environment variable (`EMPORIO_MODEL`), so a cheaper model (e.g. `claude-haiku-5-5`) can be evaluated with `scripts/evaluate.py` before switching.
 
@@ -211,10 +211,11 @@ The case allows reasonable assumptions as long as they are documented:
 
 ## Testing and evaluation
 
-**Unit tests** (`tests/`, 60 tests, offline, ~2 s):
+**Unit tests** (`tests/`, 64 tests, offline, ~3 s):
 
 - `test_data_and_policies.py`: table loading, normalization, and that key facts from the PDF survived the transcription.
 - `test_tools.py`: budget search, plural and punctuation matching, out-of-stock alternatives, active vs. expired promotions, PIX non-cumulativity, installment bands (parametrized), order lookup with several phone formats, **wrong phone vs. missing order indistinguishable**, **no access to another customer's order**, **no contact data in results**, lockout after 3 failures, escalation logging, and malformed tool inputs returning errors instead of raising.
+- `test_cli_and_config.py`: clear errors for invalid configuration or a missing data folder (instead of a traceback), and UTF-8 output on legacy code-page consoles.
 - `test_agent.py`: the agent loop driven by a **scripted fake Claude client**. It covers tool results fed back with matching IDs, parallel calls in one message, invalid input becoming a tool error, request shape (cache, effort, fallback), multi-turn history, rollback on API errors and refusals, and the tool-round cap.
 
 **Behavioral evaluation** (`scripts/evaluate.py` → [`evals/report.md`](evals/report.md)). Unit tests prove the tools are right; this checks that the *model* uses them correctly. It runs 13 single-turn cases against the real API. Each case asserts which tools must or must not be called and which facts must or must not appear in the reply: price lookups, hidden out-of-stock items, only active promotions, PIX not stacking with a promotion, the installment rule, store hours, no order lookup without a phone, someone else's order, a contact-data request, accessories, an empty category (no invented prices), off-topic requests and prompt injection. **Latest run: 13/13.**
@@ -288,7 +289,7 @@ The workflow that worked best was **AI for speed, human for decisions and verifi
 ├── scripts/
 │   ├── evaluate.py                # behavioral evaluation against the model
 │   └── run_examples.py            # regenerates examples/
-├── tests/                         # 60 offline unit tests
+├── tests/                         # 64 offline unit tests
 ├── .env.example
 ├── pyproject.toml
 └── requirements.txt
